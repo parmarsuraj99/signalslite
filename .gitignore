@@ -1,0 +1,4 @@
+src/credentials.py
+data/
+models/
+**/*.pyc
