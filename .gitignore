@@ -1,5 +1,8 @@
-src/credentials.py
+signalslite/credentials.py
+**/*__pycache__/
 data/
 models/
 **/*.pyc
 predictions/
+**/*.egg-info/
+.vscode/
