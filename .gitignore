@@ -5,4 +5,5 @@ models/
 **/*.pyc
 predictions/
 **/*.egg-info/
-.vscode/
+.vscode/*.json
+.vscode/settings.json
