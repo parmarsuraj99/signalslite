@@ -11,18 +11,14 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 import multiprocessing
 
-from signalslite.constants import (
-    DATA_DIR,
-    DAILY_DATA_DIR,
-)
+from signalslite.constants import Directories
+
 from signalslite.data_utils import (
     load_recent_data_from_file,
     save_daily_data,
     get_latest_date,
     save_in_folders,
 )
-
-print(DATA_DIR, DAILY_DATA_DIR)
 
 
 class YahooDownloaderOHLCV:
@@ -294,7 +290,8 @@ class StockDataDownloader:
 
         return all_quotes
 
-def remove_wrong_rows(df:pd.DataFrame)->pd.DataFrame:
+
+def remove_wrong_rows(df: pd.DataFrame) -> pd.DataFrame:
     df = df[df["open"] > 0]
     df = df[df["high"] > 0]
     df = df[df["low"] > 0]
@@ -303,7 +300,8 @@ def remove_wrong_rows(df:pd.DataFrame)->pd.DataFrame:
     df = df[df["volume"] > 0]
     return df
 
-def re_adjust_ohlc(df:pd.DataFrame)->pd.DataFrame:
+
+def re_adjust_ohlc(df: pd.DataFrame) -> pd.DataFrame:
     ratio = df["close"] / df["adjusted_close"]
     df["open"] = df["open"] / ratio
     df["high"] = df["high"] / ratio
@@ -311,36 +309,52 @@ def re_adjust_ohlc(df:pd.DataFrame)->pd.DataFrame:
     df["close"] = df["close"] / ratio
     return df
 
-def update_daily_data(data_dir: str, daily_data_dir: str):
+
+def update_daily_data(data_dir: str, daily_data_dir: str, EODHD_API_KEY: str = None):
     # read the latest date
     latest_date = get_latest_date(daily_data_dir)
+
+    today_date = datetime.today().strftime("%Y-%m-%d")
+    if today_date == latest_date:
+        print("Already up-to-date")
+        return
     print(f"Latest date: {latest_date}")
 
     # download data from the latest date
     downloader = StockDataDownloader(
-        max_workers=16, eodhd_apikey="616ca0cc9db972.88349683"
+        max_workers=multiprocessing.cpu_count() - 1, eodhd_apikey=EODHD_API_KEY
     )
 
-    ticker_map = pd.read_csv("data/eodhd-map.csv").set_index("bloomberg_ticker")
+    ticker_map = pd.read_csv(f"{data_dir}/eodhd-map.csv").set_index("bloomberg_ticker")
 
-    all_quotes = downloader.download_all(
-        ticker_map, date_from=latest_date
-    )
+    all_quotes = downloader.download_all(ticker_map, date_from=latest_date)
 
     # save all quotes
     all_quotes = pd.concat(all_quotes)
     all_quotes = remove_wrong_rows(all_quotes)
     all_quotes = re_adjust_ohlc(all_quotes)
-    
+
+    print(all_quotes.index)
+    print(all_quotes.columns)
+
+    print(all_quotes.shape)
+    print(all_quotes.head())
+
     save_in_folders(all_quotes, daily_data_dir)
 
-    if os.path.exists(f"{data_dir}/all_quotes.parquet"):    
-        _prev_quotes = pd.read_pickle(f"{data_dir}/all_quotes.parquet")
-        # concat the new quotes with the old ones
-        all_quotes = pd.concat([_prev_quotes, all_quotes])
+    # if os.path.exists(f"{data_dir}/all_quotes.parquet"):
+    #     _prev_quotes = pd.read_pickle(f"{data_dir}/all_quotes.parquet")
+    #     # concat the new quotes with the old ones
+    #     all_quotes = pd.concat([_prev_quotes, all_quotes], axis=0)
 
-    all_quotes.to_parquet(f"{data_dir}/all_quotes.parquet")
+    # try:
+    #     all_quotes.to_parquet(f"{data_dir}/all_quotes.parquet")
+    # except Exception as ex:
+    #     print(f"Failed to save all quotes: {ex}")
     gc.collect()
 
+
 if __name__ == "__main__":
-    update_daily_data(DATA_DIR, DAILY_DATA_DIR)
+    dir_config = Directories()
+    update_daily_data(dir_config.DATA_DIR, dir_config.DAILY_DATA_DIR)
+    pass
