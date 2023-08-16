@@ -79,7 +79,13 @@ def calculate_all_secondary_features(
     return _all_features
 
 
-def load_process_save(feature_prefixes, dir_config):
+def update_secondary_features(dir_config, feature_prefixes=None):
+    if feature_prefixes is None:
+        feature_prefixes = [
+            "feature_1_sma",
+            "feature_1_ema",
+            "feature_1_rsi",
+        ]
     start_index = 0
     primary_data_dates = read_available_dates(dir_config.DAILY_PRIMARY_FEATURES_DIR)
     print(f"primary_dates: {len(primary_data_dates)}")
@@ -131,10 +137,11 @@ def load_process_save(feature_prefixes, dir_config):
 
 if __name__ == "__main__":
     dir_config = Directories()
+
     feature_prefixes = [
         "feature_1_sma",
         "feature_1_ema",
         "feature_1_rsi",
     ]
 
-    load_process_save(feature_prefixes, dir_config)
+    update_secondary_features(dir_config, feature_prefixes)

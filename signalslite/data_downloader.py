@@ -315,6 +315,7 @@ def update_daily_data(data_dir: str, daily_data_dir: str, EODHD_API_KEY: str = N
     latest_date = get_latest_date(daily_data_dir)
 
     today_date = datetime.today().strftime("%Y-%m-%d")
+    print(f"Today date: {today_date}")
     if today_date == latest_date:
         print("Already up-to-date")
         return
@@ -324,6 +325,15 @@ def update_daily_data(data_dir: str, daily_data_dir: str, EODHD_API_KEY: str = N
     downloader = StockDataDownloader(
         max_workers=multiprocessing.cpu_count() - 1, eodhd_apikey=EODHD_API_KEY
     )
+
+    ticker_map_fname = f"{data_dir}/eodhd-map.csv"
+    if not os.path.exists(ticker_map_fname):
+        print(f"Missing ticker map file: {ticker_map_fname}")
+        url = "https://raw.githubusercontent.com/parmarsuraj99/dsignals/main/db/eodhd-map.csv"
+        r = requests.get(url)
+        if r.status_code == requests.codes.ok:
+            with open(ticker_map_fname, "wb") as f:
+                f.write(r.content)
 
     ticker_map = pd.read_csv(f"{data_dir}/eodhd-map.csv").set_index("bloomberg_ticker")
 

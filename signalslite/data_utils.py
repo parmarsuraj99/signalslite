@@ -76,9 +76,12 @@ def save_daily_data(df, date, level_path):
 
 def save_in_folders(df, level_path):
     if "date_str" not in df.columns and "date" not in df.columns:
+        df.index = pd.to_datetime(df.index)
+        df.index.name = "date"
         df["date_str"] = df.index.strftime("%Y-%m-%d")
 
     if "date_str" not in df.columns:
+        df["date"] = pd.to_datetime(df["date"])
         df["date_str"] = df["date"].dt.strftime("%Y-%m-%d")
 
     Path(os.path.join(level_path)).mkdir(parents=True, exist_ok=True)
