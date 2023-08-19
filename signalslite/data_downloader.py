@@ -322,7 +322,7 @@ def update_daily_data(data_dir: str, daily_data_dir: str, EODHD_API_KEY: str = N
 
     # download data from the latest date
     downloader = StockDataDownloader(
-        max_workers=multiprocessing.cpu_count() - 1, eodhd_apikey=EODHD_API_KEY
+        max_workers=multiprocessing.cpu_count(), eodhd_apikey=EODHD_API_KEY
     )
 
     ticker_map_fname = f"{data_dir}/eodhd-map.csv"
