@@ -8,9 +8,6 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 from typing import Union, List, Tuple, Optional, Dict, Any
-import cudf
-import numba
-from numba import cuda
 
 import itertools
 
@@ -23,6 +20,12 @@ from signalslite.data_utils import (
 )
 from signalslite.constants import Directories
 
+try:
+    import cudf
+    import numba
+    from numba import cuda
+except ImportError:
+    print("cudf not found, using pandas")
 
 def get_combination_ratio(df: Union[pd.DataFrame, cudf.DataFrame], feature_prefix: str):
     # fetch feature_name and its combination ratio
