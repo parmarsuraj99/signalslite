@@ -1,6 +1,7 @@
 signalslite/credentials.py
 **/*__pycache__/
 data/
+test_data/
 models/
 **/*.pyc
 predictions/
