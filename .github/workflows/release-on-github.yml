@@ -16,10 +16,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.x  # Use your desired Python version
+          python-version: 3.8  # Use your desired Python version
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Install Wheel
         run: pip install wheel
 
       - name: Build Package
