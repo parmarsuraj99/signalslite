@@ -7,7 +7,7 @@ print(setuptools.find_packages())
 
 setuptools.setup(
     name="signalslite",
-    version="0.1-alpha.1",
+    version="0.1-alpha.2",
     author="Suraj Parmar",
     author_email="parmarsuraj99@gmail.com",
     description="A small package for Numerai Signals locally",
