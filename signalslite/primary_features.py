@@ -31,36 +31,14 @@ from signalslite.technical_features import (
 
 def load_recent_data(DAILY_DATA_DIR, n_days):
     recent_data = (
-        load_recent_data_from_file(
-            DAILY_DATA_DIR, n_days=n_days, ascending=False
-        )
+        load_recent_data_from_file(DAILY_DATA_DIR, n_days=n_days, ascending=False)
         .reset_index()
         .sort_values(by=["bloomberg_ticker", "date"])
     )
 
-    recent_data[
-        [
-            "open",
-            "close",
-            "high",
-            "low",
-            "adjusted_close",
-            "dividend_amount",
-            "split_ratio",
-        ]
-    ] = recent_data[
-        [
-            "open",
-            "close",
-            "high",
-            "low",
-            "adjusted_close",
-            "dividend_amount",
-            "split_ratio",
-        ]
-    ].astype(
-        "float16"
-    )
+    cols = recent_data.select_dtypes(include=["float32", "int64"]).columns
+
+    recent_data[cols] = recent_data[cols].astype("float16")
 
     # filter out tickers with less than 100 days of data
     recent_data = recent_data.groupby("bloomberg_ticker").filter(lambda x: len(x) > 100)
@@ -145,19 +123,19 @@ def save_features(res, DAILY_PRIMARY_FEATURES_DIR):
         del _tmp
         gc.collect()
 
+
 def generate_primary_features(dir_config):
-
     n_days_to_load = -1
-
-    dir_config = Directories()
 
     # if some of primary features in days are there then take last 1000 days in adjusted data: 1000
     # else take all days in adjusted data: -1
     if os.path.exists(dir_config.DAILY_PRIMARY_FEATURES_DIR):
         raw_data_dates = read_available_dates(dir_config.DAILY_DATA_DIR)
         print(f"raw_data_dates: {len(raw_data_dates)}")
-        primary_features_dates = read_available_dates(dir_config.DAILY_PRIMARY_FEATURES_DIR)
-        
+        primary_features_dates = read_available_dates(
+            dir_config.DAILY_PRIMARY_FEATURES_DIR
+        )
+
         # difference in days between last date in raw data and last date in primary features
         last_date_raw = np.sort(raw_data_dates)[-1]
         last_date_primary = np.sort(primary_features_dates)[-1]
@@ -183,7 +161,7 @@ def generate_primary_features(dir_config):
     features = generate_features(recent_data, function_to_window)
     save_features(features, dir_config.DAILY_PRIMARY_FEATURES_DIR)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     dir_config = Directories()
     generate_primary_features(dir_config)
