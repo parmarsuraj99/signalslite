@@ -27,19 +27,8 @@ jobs:
       - name: Build Package
         run: python setup.py sdist bdist_wheel
 
-      - name: Create Release
+      - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Assets
-        id: upload-release-assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
