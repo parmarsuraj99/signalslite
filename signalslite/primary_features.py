@@ -95,7 +95,7 @@ def generate_features(recent_data, function_to_window, use_cudf:bool):
         else:
             _df_gpu = tickers_data
 
-        _res = compute_features(_df_gpu, function_to_window)
+        _res = compute_features(_df_gpu, function_to_window, use_cudf=use_cudf)
         _res = _res.to_pandas().astype("float16")
         _res["date"] = _df_gpu["date"].to_pandas()
         _res["bloomberg_ticker"] = _df_gpu["bloomberg_ticker"].to_pandas()
