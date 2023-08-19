@@ -23,6 +23,7 @@ def load_recent_data_from_file(
     DAILY_DATA_DIR, n_days=1, ascending=False, offset=0, dtype: str = "float32"
 ):
     assert dtype in ["float32", "float16"]
+    print(DAILY_DATA_DIR)
 
     dates = []
     for root, dirs, files in os.walk(DAILY_DATA_DIR):
@@ -31,7 +32,6 @@ def load_recent_data_from_file(
                 dates.append(file[:-8])
     _to_reverse = ascending == False
     dates = sorted(dates, reverse=_to_reverse)
-    dates = dates[offset : offset + n_days]
 
     if n_days < 0:
         _tmp = pd.concat(
@@ -47,6 +47,9 @@ def load_recent_data_from_file(
             _tmp[float16_cols] = _tmp[float16_cols].astype("float16")
 
         return _tmp
+    
+    dates = dates[offset: offset + n_days]
+
     _tmp = pd.concat(
         [
             pd.read_parquet(
