@@ -27,7 +27,8 @@ try:
 except ImportError:
     print("cudf not found, using pandas")
 
-def get_combination_ratio(df: Union[pd.DataFrame, cudf.DataFrame], feature_prefix: str):
+
+def get_combination_ratio(df, feature_prefix: str):
     # fetch feature_name and its combination ratio
 
     feature_cols = [f for f in df.columns if feature_prefix in f]
@@ -69,7 +70,7 @@ def get_combination_ratio(df: Union[pd.DataFrame, cudf.DataFrame], feature_prefi
 
 
 def calculate_all_secondary_features(
-    df: Union[pd.DataFrame, cudf.DataFrame], feature_prefixes: List[str]
+    df, feature_prefixes: List[str]
 ):
     _all_features = []
     for feature_prefix in feature_prefixes:
