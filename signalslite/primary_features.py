@@ -56,7 +56,7 @@ def load_recent_data(DAILY_DATA_DIR, n_days):
     return recent_data
 
 
-def compute_features(df, function_to_window):
+def compute_features(df, function_to_window, use_cudf:bool):
     features = []
     for func, windows in function_to_window.items():
         for window in windows:
@@ -72,7 +72,12 @@ def compute_features(df, function_to_window):
                 features.append(_feat)
 
     # print type of features
-    cated = cudf.concat(features, axis=1).astype("float32").add_prefix("feature_1_")
+    if use_cudf:
+        print("features type: cudf")
+        cated = cudf.concat(features, axis=1).astype("float32").add_prefix("feature_1_")
+    else:
+        print("features type: pandas")
+        cated = pd.concat(features, axis=1).astype("float32").add_prefix("feature_1_")
     return cated
 
 
