@@ -7,10 +7,6 @@ import multiprocessing
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
-import cudf
-import numba
-from numba import cuda
-
 from signalslite.data_utils import (
     load_recent_data_from_file,
     save_in_folders,
@@ -27,6 +23,16 @@ from signalslite.technical_features import (
     macd,
     average_true_range,
 )
+
+try:
+    import cudf
+    import numba
+    from numba import cuda
+
+    USE_CUDF = True
+except ImportError:
+    USE_CUDF = False
+    print("cudf not found, using pandas")
 
 
 def load_recent_data(DAILY_DATA_DIR, n_days):
@@ -70,7 +76,7 @@ def compute_features(df, function_to_window):
     return cated
 
 
-def generate_features(recent_data, function_to_window):
+def generate_features(recent_data, function_to_window, use_cudf:bool):
     tickers_list = recent_data["bloomberg_ticker"].unique().tolist()
 
     # iterate over ticker chunks in 500
@@ -79,8 +85,11 @@ def generate_features(recent_data, function_to_window):
         tickers = tickers_list[i : i + 1000]
         # print(tickers)
         tickers_data = recent_data[recent_data["bloomberg_ticker"].isin(tickers)]
+        if use_cudf:
+            _df_gpu = cudf.from_pandas(tickers_data)
+        else:
+            _df_gpu = tickers_data
 
-        _df_gpu = cudf.from_pandas(tickers_data)
         _res = compute_features(_df_gpu, function_to_window)
         _res = _res.to_pandas().astype("float16")
         _res["date"] = _df_gpu["date"].to_pandas()
@@ -125,6 +134,17 @@ def save_features(res, DAILY_PRIMARY_FEATURES_DIR):
 
 
 def generate_primary_features(dir_config):
+
+    try:
+        import cudf
+        import numba
+        from numba import cuda
+
+        USE_CUDF = True
+    except ImportError:
+        USE_CUDF = False
+        print("cudf not found, using pandas")
+
     n_days_to_load = -1
 
     # if some of primary features in days are there then take last 1000 days in adjusted data: 1000
@@ -158,7 +178,7 @@ def generate_primary_features(dir_config):
 
     # load recent data
     recent_data = load_recent_data(dir_config.DAILY_DATA_DIR, n_days_to_load)
-    features = generate_features(recent_data, function_to_window)
+    features = generate_features(recent_data, function_to_window, USE_CUDF)
     save_features(features, dir_config.DAILY_PRIMARY_FEATURES_DIR)
 
 
