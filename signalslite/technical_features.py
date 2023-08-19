@@ -1,3 +1,6 @@
+# Would be nice to have a class for this, that automatically switches between cuda and cpu
+
+
 def simple_moving_average(df, window):
     res = df["close"].rolling(window).mean()
     res.name = f"sma_{window}"
