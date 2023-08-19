@@ -3,7 +3,7 @@ name: Create GitHub Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   release:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: 3.8  # Use your desired Python version
+          python-version: 3.8 # Use your desired Python version
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -36,3 +36,20 @@ jobs:
             dist/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install twine
+        run: pip install twine
+
+      - name: Upload to PyPI
+        run: |
+          python -m twine upload dist/* --skip-existing --verbose
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Upload to TestPyPI
+        run: |
+          python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/* --skip-existing --verbose
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_TOKEN }}
