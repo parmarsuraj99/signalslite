@@ -39,10 +39,10 @@ class YahooDownloaderOHLCV:
         )
 
         if dividends is not None and len(dividends) > 1:
-            dividends["date64"] = pd.to_datetime(dividends.index, format="%Y-%m-%d")
+            dividends["date"] = pd.to_datetime(dividends.index, format="%Y-%m-%d")
             dividends = (
                 dividends.reset_index(drop=True)
-                .set_index("date64")
+                .set_index("date")
                 .sort_index()
                 .rename(columns={"Dividends": "dividend_amount"})
             )
@@ -62,11 +62,12 @@ class YahooDownloaderOHLCV:
             .set_index("Date")
         )
 
+
         if splits is not None and len(splits) > 1:
-            splits["date64"] = pd.to_datetime(splits.index, format="%Y-%m-%d")
+            splits["date"] = pd.to_datetime(splits.index, format="%Y-%m-%d")
             splits = (
                 splits.reset_index(drop=True)
-                .set_index("date64")
+                .set_index("date")
                 .sort_index()
                 .rename(columns={"Stock Splits": "split_factor"})
             )
@@ -96,6 +97,7 @@ class YahooDownloaderOHLCV:
             .set_index("Date")
         )
 
+
         if quotes is not None and len(quotes) > 1:
             quotes["date64"] = pd.to_datetime(quotes.index, format="%Y-%m-%d")
             quotes = quotes.reset_index(drop=True).set_index("date64").sort_index()
@@ -112,14 +114,15 @@ class YahooDownloaderOHLCV:
             dividends = cls._download_dividends_yahoo(
                 signals_ticker, date_from, date_until
             )
-            splits = cls._download_dividends_yahoo(
+            splits = cls._download_splits_yahoo(
                 signals_ticker, date_from, date_until
             )
 
-            if dividends is not None and len(dividends) > 1:
+            if dividends is not None and len(dividends) >= 1:
                 quotes = quotes.join(dividends, how="left")
 
-            if splits is not None and len(splits) > 1:
+
+            if splits is not None and len(splits) >= 1:
                 quotes = quotes.join(splits, how="left")
 
         return quotes
@@ -253,10 +256,6 @@ class StockDataDownloader:
 
             except Exception as ex:
                 # logger.exception(ex)
-
-                print(
-                    f"download_one, ticker:{signals_ticker}, data provider: {data_provider}, exception:{ex}, bbg_ticker:{bloomberg_ticker}"
-                )
                 time.sleep(5)
 
         return bloomberg_ticker, quotes
