@@ -21,11 +21,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Build Package
+        run: python setup.py sdist bdist_wheel
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/*  # Modify this to match your distribution files
+          files: |
+          dist/*  
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
