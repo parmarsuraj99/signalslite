@@ -6,13 +6,13 @@ name: Python package
 on:
   push:
     paths:
-      - '../../signalslite/**'
-      - '../../tests/**'
+      - 'signalslite**'
+      - 'tests/**'
     branches: [ "master" ]
   pull_request:
     paths:
-      - '../../signalslite/**'
-      - '../../tests/**'
+      - 'signalslite/**'
+      - 'tests/**'
     branches: [ "master" ]
 
 jobs:
