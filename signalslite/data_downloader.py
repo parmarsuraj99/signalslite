@@ -327,6 +327,8 @@ def update_daily_data(data_dir: str, daily_data_dir: str, EODHD_API_KEY: str = N
 
     ticker_map_fname = f"{data_dir}/eodhd-map.csv"
     if not os.path.exists(ticker_map_fname):
+        # make sure path to ticker map file exists
+        Path(data_dir).mkdir(parents=True, exist_ok=True)
         print(f"Missing ticker map file: {ticker_map_fname}")
         url = "https://raw.githubusercontent.com/parmarsuraj99/dsignals/main/db/eodhd-map.csv"
         r = requests.get(url)
