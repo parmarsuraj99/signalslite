@@ -96,14 +96,23 @@ def generate_features(recent_data, function_to_window, use_cudf:bool):
             _df_gpu = tickers_data
 
         _res = compute_features(_df_gpu, function_to_window, use_cudf=use_cudf)
-        _res = _res.to_pandas().astype("float16")
-        _res["date"] = _df_gpu["date"].to_pandas()
-        _res["bloomberg_ticker"] = _df_gpu["bloomberg_ticker"].to_pandas()
-        _res["close"] = _df_gpu["close"].to_pandas()
-        _res["volume"] = _df_gpu["volume"].to_pandas()
-        _res["open"] = _df_gpu["open"].to_pandas()
-        _res["high"] = _df_gpu["high"].to_pandas()
-        _res["low"] = _df_gpu["low"].to_pandas()
+        if use_cudf:
+            _res = _res.to_pandas().astype("float16")
+            _res["date"] = _df_gpu["date"].to_pandas()
+            _res["bloomberg_ticker"] = _df_gpu["bloomberg_ticker"].to_pandas()
+            _res["close"] = _df_gpu["close"].to_pandas()
+            _res["volume"] = _df_gpu["volume"].to_pandas()
+            _res["open"] = _df_gpu["open"].to_pandas()
+            _res["high"] = _df_gpu["high"].to_pandas()
+            _res["low"] = _df_gpu["low"].to_pandas()
+        else:
+            _res["date"] = _df_gpu["date"]
+            _res["bloomberg_ticker"] = _df_gpu["bloomberg_ticker"]
+            _res["close"] = _df_gpu["close"]
+            _res["volume"] = _df_gpu["volume"]
+            _res["open"] = _df_gpu["open"]
+            _res["high"] = _df_gpu["high"]
+            _res["low"] = _df_gpu["low"]
 
         res.append(_res)
 
