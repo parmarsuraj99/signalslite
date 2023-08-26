@@ -62,6 +62,13 @@ def load_recent_data_from_file(
         float16_cols = _tmp.select_dtypes(include=["float32"]).columns
         _tmp[float16_cols] = _tmp[float16_cols].astype("float16")
 
+    if "open" in _tmp.columns:
+        _tmp[[
+            "open", "high", "low", "close"
+        ]] = _tmp[[
+            "open", "high", "low", "close"
+        ]].astype(dtype=dtype)
+
     return _tmp
 
 
