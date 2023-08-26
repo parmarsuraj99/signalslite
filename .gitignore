@@ -8,3 +8,4 @@ predictions/
 **/*.egg-info/
 .vscode/*.json
 .vscode/settings.json
+example_data/**
