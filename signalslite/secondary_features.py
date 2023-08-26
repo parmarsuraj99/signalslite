@@ -69,9 +69,7 @@ def get_combination_ratio(df, feature_prefix: str):
     return _cated_res
 
 
-def calculate_all_secondary_features(
-    df, feature_prefixes: List[str]
-):
+def calculate_all_secondary_features(df, feature_prefixes: List[str]):
     _all_features = []
     for feature_prefix in feature_prefixes:
         _features = [f for f in df.columns if feature_prefix in f]
