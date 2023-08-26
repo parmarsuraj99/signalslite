@@ -75,12 +75,12 @@ def scale_data(dir_config, FROM_SCRATCH=False):
     dates = read_available_dates(dir_config.DAILY_SECONDARY_FEATURES_DIR)
 
     start_index = len(dates) - 1000 if not FROM_SCRATCH else 0
-
+    print(f"Starting from index {start_index}: {dates[start_index]}")
     # iterate over all dates in chunks of 200
-    for i in tqdm(range(start_index, len(dates), 200)):
+    for i in tqdm(range(start_index, len(dates), 100)):
         _tmp = load_recent_data_from_file(
             dir_config.DAILY_SECONDARY_FEATURES_DIR,
-            n_days=200,
+            n_days=100,
             ascending=True,
             offset=i,
             dtype="float32",
