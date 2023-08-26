@@ -23,7 +23,9 @@ def bollinger_bands(df, window):
     lower = sma - 2 * std
     upper.name = f"bbupper_{window}"
     lower.name = f"bblower_{window}"
-    return upper, lower
+    bb_width = upper - lower
+    bb_width.name = f"bbwidth_{window}"
+    return upper, lower, bb_width
 
 
 def rsi(df, window):
@@ -55,3 +57,42 @@ def average_true_range(df, window):
     atr = tr.rolling(window).mean()
     atr.name = f"atr_{window}"
     return atr
+
+# cmf
+def chaikin_money_flow(df, window):
+    # Calculate the Money Flow Multiplier
+    mf_multiplier = ((df["close"] - df["low"]) - (df["high"] - df["close"])) / (df["high"] - df["low"])
+
+    # Calculate the Money Flow Volume
+    mf_volume = mf_multiplier * df["volume"]
+    
+    # Calculate the CMF Line
+    cmf_line = mf_volume.rolling(window).sum() / df["volume"].rolling(window).sum()
+    
+    cmf_line.name = f"cmf_{window}"
+    
+    return cmf_line
+
+def average_directional_index(df, window):
+    tr = df["high"] - df["low"]
+    dm_plus = (df["high"].diff() > df["low"].diff()) * df["high"].diff()
+    dm_minus = (df["low"].diff() > df["high"].diff()) * df["low"].diff()
+    tr_smoothed = tr.rolling(window).sum()
+    dm_plus_smoothed = dm_plus.rolling(window).sum()
+    dm_minus_smoothed = dm_minus.rolling(window).sum()
+    di_plus = (dm_plus_smoothed / tr_smoothed) * 100
+    di_minus = (dm_minus_smoothed / tr_smoothed) * 100
+    dx = ((di_plus - di_minus).abs() / (di_plus + di_minus)) * 100
+    adx = dx.rolling(window).mean()
+    adx.name = f"adx_{window}"
+    return adx
+
+def commodity_channel_index(df, window):
+    typical_price = (df["high"] + df["low"] + df["close"]) / 3
+    mean_deviation = typical_price.rolling(window).std()
+    
+    sma_typical_price = typical_price.rolling(window).mean()
+    cci = (typical_price - sma_typical_price) / (0.015 * mean_deviation)
+    cci.name = f"cci_{window}"
+    
+    return cci
