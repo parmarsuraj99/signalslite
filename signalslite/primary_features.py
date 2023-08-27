@@ -6,6 +6,7 @@ import gc
 import multiprocessing
 from joblib import Parallel, delayed
 from tqdm import tqdm
+tqdm.pandas()
 
 from signalslite.data_utils import (
     load_recent_data_from_file,
@@ -67,7 +68,7 @@ def load_recent_data(DAILY_DATA_DIR, n_days):
 def compute_features(df, function_to_window, use_cudf: bool):
     features = []
     for func, windows in function_to_window.items():
-        print(f"computing {func.__name__}")
+        # print(f"computing {func.__name__}")
         for window in windows:
             # pass windows as a tuple if the function takes more than one window
             if isinstance(window, tuple):
@@ -85,10 +86,10 @@ def compute_features(df, function_to_window, use_cudf: bool):
 
     # print type of features
     if use_cudf:
-        print("features type: cudf")
+        # print("features type: cudf")
         cated = cudf.concat(features, axis=1).astype("float32").add_prefix("feature_1_")
     else:
-        print("features type: pandas")
+        # print("features type: pandas")
         cated = pd.concat(features, axis=1).astype("float32").add_prefix("feature_1_")
     return cated
 
@@ -114,11 +115,16 @@ def generate_features(recent_data, function_to_window, use_cudf: bool, dir_confi
         OHLCV_COLS = ["open", "high", "low", "close", "volume"]
         _df_gpu[OHLCV_COLS] = _df_gpu[OHLCV_COLS].astype("float32")
 
-        _res = compute_features(
-            _df_gpu[OHLCV_COLS], function_to_window, use_cudf=use_cudf
-        ).copy()
+        # _res = compute_features(
+        #     _df_gpu[OHLCV_COLS], function_to_window, use_cudf=use_cudf
+        # ).copy()
+
+        _res = _df_gpu.groupby("bloomberg_ticker").apply(
+            lambda x: compute_features(x[OHLCV_COLS], function_to_window, use_cudf)
+        )
+
         if use_cudf:
-            _res = _res.to_pandas().astype("float16")
+            _res = _res.to_pandas().astype("float32")
             _res["date"] = _df_gpu["date"].to_pandas()
             _res["date_str"] = _df_gpu["date_str"].to_pandas()
             _res["bloomberg_ticker"] = _df_gpu["bloomberg_ticker"].to_pandas()
@@ -153,16 +159,20 @@ def generate_features(recent_data, function_to_window, use_cudf: bool, dir_confi
             #     _res["dividend_amount"] = _df_gpu["dividend_amount"]
 
         res.append(_res)
+        print(_res[["date", "close", "feature_1_sma_10", "feature_1_sma_20", "bloomberg_ticker"]].tail(10))
         gc.collect()
 
         del _df_gpu, _res
+        gc.collect()
 
     # res is an array of tickers with all dates in each ticker
     # iterate over the list and extract dates in chunk of 500
     # concat and save
 
-    for ix in range(0, len(unique_dates), 1000):
-        _dates = unique_dates[ix : ix + 1000]
+    gc.collect()
+
+    for ix in range(0, len(unique_dates), 200):
+        _dates = unique_dates[ix : ix + 200]
         print(_dates)
         _tmp = []
         for _df in res:
@@ -174,7 +184,11 @@ def generate_features(recent_data, function_to_window, use_cudf: bool, dir_confi
         print("cated", features.shape)
 
         print("before na", features.groupby("date").apply(len).max())
-        print(features.isna().mean().sort_values())
+        
+        # print inf
+        print("inf", features.isin([np.inf, -np.inf]).mean().sort_values())
+
+        print("nan", features.isna().mean().sort_values())
         cols_to_consider_for_dropna = [f for f in features.columns if "split" not in f]
         cols_to_consider_for_dropna = [
             f for f in cols_to_consider_for_dropna if "dividend" not in f
