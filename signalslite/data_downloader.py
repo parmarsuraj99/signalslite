@@ -353,16 +353,16 @@ def update_daily_data(data_dir: str, daily_data_dir: str, EODHD_API_KEY: str = N
 
     save_in_folders(all_quotes, daily_data_dir)
 
-    if os.path.exists(f"{data_dir}/all_quotes.parquet"):
-        _prev_quotes = pd.read_pickle(f"{data_dir}/all_quotes.parquet")
-        # concat the new quotes with the old ones
-        all_quotes = pd.concat([_prev_quotes, all_quotes], axis=0)
+    # if os.path.exists(f"{data_dir}/all_quotes.parquet"):
+    #     _prev_quotes = pd.read_pickle(f"{data_dir}/all_quotes.parquet")
+    #     # concat the new quotes with the old ones
+    #     all_quotes = pd.concat([_prev_quotes, all_quotes], axis=0)
 
-    try:
-        all_quotes.to_parquet(f"{data_dir}/all_quotes.parquet")
-    except Exception as ex:
-        print(f"Failed to save all quotes: {ex}")
-    gc.collect()
+    # try:
+    #     all_quotes.to_parquet(f"{data_dir}/all_quotes.parquet")
+    # except Exception as ex:
+    #     print(f"Failed to save all quotes: {ex}")
+    # gc.collect()
 
 
 if __name__ == "__main__":
