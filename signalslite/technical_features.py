@@ -8,7 +8,7 @@ def simple_moving_average(df, window):
 
 
 def exponential_moving_average(df, window):
-    # had to adjust for cuda
+    # had to adjust for cuda; cudf doesn't have .ewm() yet
     cum_sum = df["close"].rolling(window).sum()
     cum_count = df["close"].rolling(window).count()
     ema = cum_sum / cum_count
@@ -17,14 +17,19 @@ def exponential_moving_average(df, window):
 
 
 def bollinger_bands(df, window):
-    sma = simple_moving_average(df, window)
-    std = df["close"].rolling(window).std()
+    sma = df["close"].rolling(window).mean().ffill().bfill()
+    std = df["close"].rolling(window).std().ffill().bfill()
     upper = sma + 2 * std
     lower = sma - 2 * std
-    upper.name = f"bbupper_{window}"
-    lower.name = f"bblower_{window}"
+
+    # ratio
+    upper = upper / df["close"] - 1
+    lower = lower / df["close"] - 1
+
+    upper.name = f"bbupper_close_{window}"
+    lower.name = f"bblower_close_{window}"
     bb_width = upper - lower
-    bb_width.name = f"bbwidth_{window}"
+    bb_width.name = f"bbwidth_close_{window}"
     return upper, lower, bb_width
 
 
