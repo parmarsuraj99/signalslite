@@ -51,8 +51,9 @@ class TestSaving(unittest.TestCase):
         self.assertTrue(self.dir_config.DAILY_PRIMARY_FEATURES_DIR.is_dir())
 
         # assert length of primary features is 1000
+        # max window is 200; so initial values will be nan
         primary_features_dates = read_available_dates(self.dir_config.DAILY_PRIMARY_FEATURES_DIR)
-        self.assertEqual(len(primary_features_dates), 1000)
+        self.assertEqual(len(primary_features_dates), 1000 - 200)
 
     def test_secondary_feature_generation(self):
         self.test_primary_feature_generation()
