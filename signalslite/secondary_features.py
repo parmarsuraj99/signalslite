@@ -118,15 +118,32 @@ def update_secondary_features(dir_config, feature_prefixes=None):
             offset=i,
             dtype="float32",
         )
+        print("primary", _df.shape)
 
         feat_cols = [f for f in _df if "feature_" in f]
 
         _res = calculate_all_secondary_features(_df, feature_prefixes).astype("float32")
 
+        print("secondary: ", _res.shape)
+
+        nan_cols = _res.isna().mean().sort_values(ascending=False)
+        nan_cols = nan_cols[nan_cols > 0.03].index.tolist()
+        print("nan_cols pre inf: ", nan_cols)
+
+        # prkint unique dates with inf values; index is not date
+        inf_dates = _df[_res.isin([np.inf, -np.inf]).any(axis=1)]["date"].unique()
+        print("inf_dates", len(inf_dates))
+
         # combine primary and secondary featuers
         _res = pd.concat([_df, _res], axis=1)
         _res = _res.replace([np.inf, -np.inf], np.nan)
-        _res = _res.dropna(axis=0)
+
+        nan_cols = _res.isna().mean().sort_values(ascending=False)
+        nan_cols = nan_cols[nan_cols > 0.03].index.tolist()
+        print("nan_cols after inf: ", nan_cols)
+
+        _res = _res.dropna(subset=feat_cols, axis=0)
+        print("afer dropna: ", _res.shape)
 
         assert (
             _res.isna().mean().sort_values(ascending=False).max() < 0.1
