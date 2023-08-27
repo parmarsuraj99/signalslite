@@ -5,7 +5,7 @@ import pandas as pd
 
 from signalslite.data_utils import load_recent_data_from_file, read_available_dates, save_in_folders
 from signalslite.constants import Directories
-from signalslite.primary_features import generate_primary_features
+from signalslite.primary_features import generate_primary_features, 
 
 class TestSaving(unittest.TestCase):
     """
@@ -51,7 +51,9 @@ class TestSaving(unittest.TestCase):
 
         # assert length of primary features is 1000
         primary_features_dates = read_available_dates(self.dir_config.DAILY_PRIMARY_FEATURES_DIR)
-        self.assertEqual(len(primary_features_dates), 1000)
+
+        # max window is 200; so initial values will be nan
+        self.assertEqual(len(primary_features_dates), 1000 - 200)
 
 
     def tearDown(self):
