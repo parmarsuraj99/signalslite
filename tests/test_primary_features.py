@@ -5,7 +5,7 @@ import pandas as pd
 
 from signalslite.data_utils import load_recent_data_from_file, read_available_dates, save_in_folders
 from signalslite.constants import Directories
-from signalslite.primary_features import generate_primary_features, 
+from signalslite.primary_features import generate_primary_features
 
 class TestSaving(unittest.TestCase):
     """
