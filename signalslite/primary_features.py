@@ -97,7 +97,6 @@ def compute_features(df, function_to_window, use_cudf: bool):
 def generate_features(recent_data, function_to_window, use_cudf: bool, dir_config):
     tickers_list = recent_data["bloomberg_ticker"].unique().tolist()
     unique_dates = sorted(recent_data["date_str"].unique().tolist())
-    print(unique_dates)
 
     # iterate over ticker chunks in 500
     res = []
