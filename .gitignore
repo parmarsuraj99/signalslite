@@ -9,3 +9,4 @@ predictions/
 .vscode/*.json
 .vscode/settings.json
 example_data/**
+.cursorignore
