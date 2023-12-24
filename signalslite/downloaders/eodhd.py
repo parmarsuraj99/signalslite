@@ -4,7 +4,8 @@ from typing import Optional
 
 import pandas as pd
 import requests
-from base import DownloadFundamentals, DownloadOHLCV
+from .base import DownloadFundamentals, DownloadOHLCV
+from typing import List
 
 
 class EODHDOHLCV(DownloadOHLCV):
@@ -84,11 +85,11 @@ class EODHDOHLCV(DownloadOHLCV):
         """
         Download the OHLCV data for one ticker from the EOD Historical Data API.
         """
-        if date_from is None:
-            start_date = "2000-01-01"
+        start_date = "2000-01-01" if date_from is None else date_from
 
-        if date_until is None:
-            date_until = datetime.today().strftime("%Y-%m-%d")
+        date_until = (
+            datetime.today().strftime("%Y-%m-%d") if date_until is None else date_until
+        )
 
         quotes = None
         api_key = self.eodhd_api_key
@@ -139,8 +140,11 @@ class EOODHDFundamentals(DownloadFundamentals):
             # data will be very nested, so we simply return the whole thing
             return data
 
-    def download_all_tickers(self, tickers: list):
-        raise NotImplementedError
+    def download_all_tickers(self, signals_ticker: List[str]):
+        """
+        Download the fundamentals data for all tickers in the list.
+        """
+        pass
 
 
 if __name__ == "__main__":

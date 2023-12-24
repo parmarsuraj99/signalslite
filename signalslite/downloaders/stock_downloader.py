@@ -57,7 +57,7 @@ def map_ticker_to_provider(ticker_map: pd.DataFrame):
         )
         .drop_duplicates()
         .sample(frac=1)
-        .head(100)
+        .head(10)
     )
 
     return tickers_df
@@ -165,9 +165,11 @@ class OHLCVDownloader:
                     data_provider=data_provider,
                     date_from=date_from,
                     date_until=date_until,
-                ): ticker
-                for ticker, data_provider in zip(
-                    tickers_df["ticker"], tickers_df["data_provider"]
+                ): bbg_ticker
+                for ticker, data_provider, bbg_ticker in zip(
+                    tickers_df["ticker"],
+                    tickers_df["data_provider"],
+                    tickers_df["bbg_ticker"],
                 )
             }
 
@@ -175,14 +177,14 @@ class OHLCVDownloader:
 
             results = []
             for future in tqdm(concurrent.futures.as_completed(future_to_ticker)):
-                ticker = future_to_ticker[future]
+                bbg_ticker = future_to_ticker[future]
                 try:
                     provider_ticker, quotes = future.result()
                     if quotes is not None:
-                        quotes["bloomberg_ticker"] = ticker
+                        quotes["bloomberg_ticker"] = bbg_ticker
                         results.append(quotes)
                 except Exception as exc:
-                    logging.error(f"Error downloading {ticker} from: {exc}")
+                    logging.error(f"Error downloading {provider_ticker} from: {exc}")
 
             # return as a dataframe with bloomberg ticker
             logging.info(f"Downloaded {len(results)} quotes.")
@@ -190,7 +192,7 @@ class OHLCVDownloader:
             return results
 
 
-class StockFundamentalDownload:
+class StockFundamentalDownloader:
     def __init__(self, eodhd_api_key: str, tickermap: dict = None):
         self.eodhd_downloader = EOODHDFundamentals(eodhd_api_key)
         self.tickermap = tickermap
@@ -216,9 +218,11 @@ class StockFundamentalDownload:
                     self.download_one,
                     provider_ticker=ticker,
                     data_provider=data_provider,
-                ): ticker
-                for ticker, data_provider in zip(
-                    tickers_df["ticker"], tickers_df["data_provider"]
+                ): bbg_ticker
+                for ticker, data_provider, bbg_ticker in zip(
+                    tickers_df["ticker"],
+                    tickers_df["data_provider"],
+                    tickers_df["bbg_ticker"],
                 )
             }
 
@@ -226,18 +230,19 @@ class StockFundamentalDownload:
 
             results = {}
             for future in tqdm(concurrent.futures.as_completed(future_to_ticker)):
-                ticker = future_to_ticker[future]
+                bbg_ticker = future_to_ticker[future]
                 try:
                     provider_ticker, quotes = future.result()
                     if quotes is not None:
-                        results[provider_ticker] = quotes
+                        results[bbg_ticker] = quotes
                 except Exception as exc:
-                    logging.error(f"Error downloading {ticker} from: {exc}")
+                    logging.error(f"Error downloading {provider_ticker} from: {exc}")
 
             # return as a dataframe with bloomberg ticker
             logging.info(f"Downloaded {len(results)} quotes.")
 
             return results
+
 
 if __name__ == "__main__":
     import logging
@@ -254,7 +259,7 @@ if __name__ == "__main__":
     # pd.concat(all_quotes).to_csv("data/eodhd.csv")
     # logging.info(f"Downloaded {len(all_quotes)} from EOD Historical Data.")
 
-    fundamental_downloader = StockFundamentalDownload(EODHD_API_KEY, mappig)
+    fundamental_downloader = StockFundamentalDownloader(EODHD_API_KEY, mappig)
     fundamental_data = fundamental_downloader.download_all(mappig)
 
     pd.to_pickle(fundamental_data, f"data/eodhd_fundamentals.pkl")

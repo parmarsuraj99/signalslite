@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 import pandas as pd
-from base import DownloadFundamentals, DownloadOHLCV
+from .base import DownloadFundamentals, DownloadOHLCV
 
 
 class YahooFinanceOHLCV(DownloadOHLCV):
