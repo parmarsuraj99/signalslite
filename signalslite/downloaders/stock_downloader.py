@@ -57,7 +57,7 @@ def map_ticker_to_provider(ticker_map: pd.DataFrame):
         )
         .drop_duplicates()
         .sample(frac=1)
-        .head(10)
+        # .head(10)
     )
 
     return tickers_df
@@ -176,16 +176,22 @@ class OHLCVDownloader:
             logging.info(f"Number of tickers: {len(future_to_ticker)}")
 
             results = []
-            for future in tqdm(concurrent.futures.as_completed(future_to_ticker)):
+            pbar = tqdm(total=len(future_to_ticker))
+            for future in tqdm(
+                concurrent.futures.as_completed(future_to_ticker),
+                total=len(future_to_ticker),
+            ):
                 bbg_ticker = future_to_ticker[future]
                 try:
                     provider_ticker, quotes = future.result()
                     if quotes is not None:
                         quotes["bloomberg_ticker"] = bbg_ticker
                         results.append(quotes)
+                        pbar.update(1)
                 except Exception as exc:
                     logging.error(f"Error downloading {provider_ticker} from: {exc}")
 
+            pbar.close()
             # return as a dataframe with bloomberg ticker
             logging.info(f"Downloaded {len(results)} quotes.")
 
@@ -198,9 +204,16 @@ class StockFundamentalDownloader:
         self.tickermap = tickermap
 
     def download_one(self, provider_ticker: str, data_provider: str):
-        if data_provider == "eodhd":
-            data = self.eodhd_downloader.download_one_ticker(provider_ticker)
-            return provider_ticker, data
+        for _ in range(3):
+            try:
+                if data_provider == "eodhd":
+                    data = self.eodhd_downloader.download_one_ticker(provider_ticker)
+                    return provider_ticker, data
+            except Exception as ex:
+                logging.error(
+                    f"Error downloading {provider_ticker} from {data_provider}: {ex}"
+                )
+                time.sleep(5)
 
         return provider_ticker, None
 
@@ -209,6 +222,7 @@ class StockFundamentalDownloader:
 
         # use futures to download the data in parallel; sample from provider maps to avoid hitting the API limits
         import concurrent.futures
+
         from tqdm import tqdm
 
         # download the data in parallel
@@ -229,15 +243,21 @@ class StockFundamentalDownloader:
             logging.info(f"Number of tickers: {len(future_to_ticker)}")
 
             results = {}
-            for future in tqdm(concurrent.futures.as_completed(future_to_ticker)):
+            pbar = tqdm(total=len(future_to_ticker))
+            for future in tqdm(
+                concurrent.futures.as_completed(future_to_ticker),
+                total=len(future_to_ticker),
+            ):
                 bbg_ticker = future_to_ticker[future]
                 try:
                     provider_ticker, quotes = future.result()
                     if quotes is not None:
                         results[bbg_ticker] = quotes
+                        pbar.update(1)
                 except Exception as exc:
                     logging.error(f"Error downloading {provider_ticker} from: {exc}")
 
+            pbar.close()
             # return as a dataframe with bloomberg ticker
             logging.info(f"Downloaded {len(results)} quotes.")
 

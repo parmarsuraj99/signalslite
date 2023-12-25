@@ -93,6 +93,7 @@ class LocalStorageWriter(StorageWriter):
         # create the directory if it doesn't exist
         (self.root_dir / subdir).mkdir(parents=True, exist_ok=True)
         for ticker, fundamentals in ticker_to_fundamentals.items():
+            ticker = ticker.replace("/", "__")
             pd.to_pickle(
                 fundamentals, self.root_dir / subdir / f"{ticker}_{today_date_utc}.pkl"
             )

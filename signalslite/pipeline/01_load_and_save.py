@@ -57,18 +57,19 @@ class RawDataPipeline:
             all_quotes = self.download_ohlcv()
             self.storage_interface.write_ohlcv(all_quotes, self.OHLCV_DIR)
 
-            return
-
-        last_date = available_dates[
-            -1
-        ]  # should be -1 but just for robustness loading another day since it'll be overwritten anyway
-        if last_date == date_today_utc:
-            logging.info("Already up to date.")
-            return
-
-        logging.info(f"last_date: {last_date}")
-        all_quotes = self.download_ohlcv(from_date=last_date)
-        self.storage_interface.write_ohlcv(all_quotes, self.OHLCV_DIR, reset=True)
+        else:
+            last_date = available_dates[
+                -1
+            ]  # should be -1 but just for robustness loading another day since it'll be overwritten anyway
+            logging.info(f"last_date: {last_date}")
+            if last_date == date_today_utc:
+                logging.info("Already up to date.")
+            else:
+                logging.info(f"last_date: {last_date}")
+                all_quotes = self.download_ohlcv(from_date=last_date)
+                self.storage_interface.write_ohlcv(
+                    all_quotes, self.OHLCV_DIR, reset=True
+                )
 
     def download_fundamentals(self):
         """
@@ -82,7 +83,7 @@ class RawDataPipeline:
         """
         Update the fundamentals data for all tickers in the mapping file.
         """
-
+        logging.info("Updating fundamentals data.")
         # fetach latest fundamental data
         all_fundamentals = self.download_fundamentals()
 
@@ -91,11 +92,16 @@ class RawDataPipeline:
             all_fundamentals, self.FUNDAMENTALS_DIR
         )
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     mappig = pd.read_csv("data/eodhd-map.csv").set_index("bloomberg_ticker")
     EODHD_API_KEY = os.environ.get("EODHD_API_KEY")
+
+    assert (
+        EODHD_API_KEY is not None and len(EODHD_API_KEY) > 10
+    ), "Please set the EODHD_API_KEY environment variable."
 
     storage_interface = local_storage.LocalStorage("data")
     pipeline = RawDataPipeline("data", storage_interface, mappig, EODHD_API_KEY)
