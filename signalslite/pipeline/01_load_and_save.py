@@ -10,11 +10,12 @@ from signalslite.storages import local_storage
 class RawDataPipeline:
     OHLCV_DIR = "ohlcv"
     FUNDAMENTALS_DIR = "fundamentals"
+    MISC_DIR = "misc"
 
     def __init__(
         self,
         root_dir: str,
-        storage_interface,
+        storage_interface: local_storage.LocalStorage,
         mappig: pd.DataFrame,
         EODHD_API_KEY: str,
     ):
@@ -61,7 +62,7 @@ class RawDataPipeline:
             last_date = available_dates[
                 -1
             ]  # should be -1 but just for robustness loading another day since it'll be overwritten anyway
-            logging.info(f"last_date: {last_date}")
+            logging.info(f"las available date: {last_date}\n today: {date_today_utc}")
             if last_date == date_today_utc:
                 logging.info("Already up to date.")
             else:
@@ -76,7 +77,19 @@ class RawDataPipeline:
         Download the fundamentals data for all tickers in the mapping file.
         """
         logging.info("Downloading fundamentals data.")
-        all_fundamentals = self.fundamentals_downloader.download_all(self.mappig)
+
+        available_tickers = self.storage_interface.read_fundamental_tickers(
+            self.FUNDAMENTALS_DIR
+        )
+
+        # TODO: check if the tickers are still valid
+        # Handle the frequency of updating data
+
+        logging.info(f"available tickers: {available_tickers}")
+
+        all_fundamentals = self.fundamentals_downloader.download_all(
+            available_tickers=available_tickers["bbg_ticker"].tolist()
+        )
         return all_fundamentals
 
     def update_fundamentals(self):
@@ -85,6 +98,7 @@ class RawDataPipeline:
         """
         logging.info("Updating fundamentals data.")
         # fetach latest fundamental data
+
         all_fundamentals = self.download_fundamentals()
 
         # write to storage
@@ -105,7 +119,7 @@ if __name__ == "__main__":
 
     storage_interface = local_storage.LocalStorage("data")
     pipeline = RawDataPipeline("data", storage_interface, mappig, EODHD_API_KEY)
-    pipeline.update_ohlcv()
+    # pipeline.update_ohlcv()
 
     # update fundamentals
     pipeline.update_fundamentals()

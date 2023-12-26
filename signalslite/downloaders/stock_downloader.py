@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import List, Union
 
 import pandas as pd
 
@@ -148,7 +149,6 @@ class OHLCVDownloader:
         -------
         A dictionary containing the OHLCV data for each ticker.
         """
-
         tickers_df = map_ticker_to_provider(self.tickermap)
 
         # use futures to download the data in parallel; sample from provider maps to avoid hitting the API limits
@@ -188,6 +188,7 @@ class OHLCVDownloader:
                         quotes["bloomberg_ticker"] = bbg_ticker
                         results.append(quotes)
                         pbar.update(1)
+
                 except Exception as exc:
                     logging.error(f"Error downloading {provider_ticker} from: {exc}")
 
@@ -217,8 +218,27 @@ class StockFundamentalDownloader:
 
         return provider_ticker, None
 
-    def download_all(self, mappig: pd.DataFrame):
-        tickers_df = map_ticker_to_provider(mappig)
+    def download_all(self, available_tickers: Union[List[str], None] = None):
+        """
+        Download the fundamentals data for a list of tickers.
+
+        Parameters
+        ----------
+        available_tickes: list
+            A list of tickers that are already available in the storage.
+            If provided, the tickers will be skipped. they are Bloomberg tickers format.
+        """
+
+        tickers_df = map_ticker_to_provider(
+            self.tickermap
+        )  # [ticker, data_provider, bbg_ticker]
+
+        if available_tickers is not None:
+            logging.info(f"Number of available tickers: {len(available_tickers)}")
+            tickers_df = tickers_df[~tickers_df["bbg_ticker"].isin(available_tickers)]
+            logging.info(f"Number of tickers to download: {tickers_df.groupby('data_provider').count()}")
+
+        print(tickers_df.head())
 
         # use futures to download the data in parallel; sample from provider maps to avoid hitting the API limits
         import concurrent.futures

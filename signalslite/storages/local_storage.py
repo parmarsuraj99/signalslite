@@ -89,14 +89,25 @@ class LocalStorageWriter(StorageWriter):
             subdir: str
                 The subdirectory to write the data to.
         """
+
+        # dump entire file for backup since API calls are costly
+        pd.to_pickle(
+            ticker_to_fundamentals,
+            self.root_dir / subdir / f"all_fundamentals.pkl",
+        )
+
         today_date_utc = pd.Timestamp.utcnow().strftime("%Y-%m-%d")
         # create the directory if it doesn't exist
         (self.root_dir / subdir).mkdir(parents=True, exist_ok=True)
         for ticker, fundamentals in ticker_to_fundamentals.items():
-            ticker = ticker.replace("/", "__")
-            pd.to_pickle(
-                fundamentals, self.root_dir / subdir / f"{ticker}_{today_date_utc}.pkl"
-            )
+            try:
+                ticker = ticker.replace("/", "__")
+                pd.to_pickle(
+                    fundamentals,
+                    self.root_dir / subdir / f"{ticker}_{today_date_utc}.pkl",
+                )
+            except Exception as e:
+                logging.info(f"Failed to save fundamentals for {ticker}: {e}")
 
 
 class LocalStorageReader(StorageReader):
@@ -146,6 +157,48 @@ class LocalStorageReader(StorageReader):
             [pd.read_parquet(self.root_dir / f"{date}.parquet") for date in dates]
         )
         return df
+
+    def read_fundamental_tickers(self, subdir: str) -> pd.DataFrame:
+        """
+        Read the tickers for which fundamentals data is available.
+        params:
+            subdir: str
+                The subdirectory to read the data from.
+        returns:
+            pd.DataFrame
+                A DataFrame containing the tickers and the dates.
+        """
+        fundamentals_dir = self.root_dir / subdir
+
+        if not os.path.exists(fundamentals_dir):
+            return []
+
+        files = sorted(
+            [
+                file[: -len(".pkl")]
+                for root, dirs, files in os.walk(fundamentals_dir)
+                for file in files
+                if file.endswith(".pkl")
+            ]
+        )
+
+        # file format: ORE AU_2023-12-26;
+        # some tickers have a / in them, so we replace it with __
+        extract_ticker = lambda file: file.split("_")[0].replace("__", "/")
+        extract_date = (
+            lambda file: file.split("_")[1] if len(file.split("-")) > 2 else None
+        )
+
+        ticker_to_date = {extract_ticker(file): extract_date(file) for file in files}
+        # make a dataframe to sort by date
+        ticker_to_date = (
+            pd.DataFrame.from_dict(ticker_to_date, orient="index", columns=["date"])
+            .dropna()
+            .reset_index()
+            .rename(columns={"index": "bbg_ticker"})
+        )
+
+        return ticker_to_date
 
 
 class LocalStorage(LocalStorageReader, LocalStorageWriter):
